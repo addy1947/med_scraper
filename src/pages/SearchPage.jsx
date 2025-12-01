@@ -12,6 +12,9 @@ function SearchPage() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
 
+    const [sortBy, setSortBy] = useState('relevance') // 'relevance', 'price', 'discount', 'perUnit'
+    const [sortOrder, setSortOrder] = useState('asc') // 'asc', 'desc'
+
     const [selectedProducts, setSelectedProducts] = useState([])
     const [savedItems, setSavedItems] = useState([])
     const [showCompareModal, setShowCompareModal] = useState(false)
@@ -29,6 +32,48 @@ function SearchPage() {
 
         return (price / unitCount).toFixed(2)
     }
+
+    const sortProducts = (products, criteria, order = 'asc') => {
+        if (!products || products.length === 0) return [];
+        let sorted = [...products];
+
+        switch (criteria) {
+            case 'price':
+                sorted.sort((a, b) => {
+                    const priceA = parseFloat(a.specialPrice || a.price) || 0;
+                    const priceB = parseFloat(b.specialPrice || b.price) || 0;
+                    return priceA - priceB;
+                });
+                break;
+            case 'discount':
+                sorted.sort((a, b) => {
+                    const discountA = parseFloat(a.discount || a.discountPercentage) || 0;
+                    const discountB = parseFloat(b.discount || b.discountPercentage) || 0;
+                    return discountA - discountB; // Base sort: Low to High
+                });
+                break;
+            case 'perUnit':
+                sorted.sort((a, b) => {
+                    const getPrice = (p) => {
+                        const val = p.pricePerUnit || calculatePricePerUnit(p.packSize || p.unitSize || p.measurement || p.package, p.price);
+                        if (!val) return Infinity;
+                        // Remove non-numeric characters except dot
+                        const cleanVal = String(val).replace(/[^\d.]/g, '');
+                        return parseFloat(cleanVal) || Infinity;
+                    };
+                    return getPrice(a) - getPrice(b);
+                });
+                break;
+            default:
+                break;
+        }
+
+        if (order === 'desc') {
+            sorted.reverse();
+        }
+
+        return sorted;
+    };
 
     const sourceLabel = source => {
         if (source === '1mg') return 'Tata 1mg'
@@ -618,498 +663,558 @@ function SearchPage() {
 
                 {/* RESULTS GRID */}
                 {(oneMgProducts.length > 0 || apolloProducts.length > 0 || pharmEasyProducts.length > 0 || truemedProducts.length > 0 || netmedProducts.length > 0) && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 animate-fade-in">
+                    <>
+                        {/* SORTING CONTROLS */}
+                        <div className="flex flex-wrap justify-center gap-3 mb-8 animate-fade-in">
+                            <span className="text-slate-500 font-medium self-center mr-2">Sort by:</span>
+                            <button
+                                onClick={() => {
+                                    setSortBy('relevance');
+                                    setSortOrder('asc');
+                                }}
+                                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${sortBy === 'relevance'
+                                        ? 'bg-slate-900 text-white shadow-md'
+                                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                                    }`}
+                            >
+                                Relevance
+                            </button>
+                            <button
+                                onClick={() => setSortBy('discount')}
+                                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${sortBy === 'discount'
+                                    ? 'bg-emerald-600 text-white shadow-md'
+                                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                                    }`}
+                            >
+                                Discount %
+                            </button>
+                            <button
+                                onClick={() => setSortBy('price')}
+                                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${sortBy === 'price'
+                                    ? 'bg-emerald-600 text-white shadow-md'
+                                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                                    }`}
+                            >
+                                Price (Low to High)
+                            </button>
+                            <button
+                                onClick={() => setSortBy('perUnit')}
+                                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${sortBy === 'perUnit'
+                                    ? 'bg-emerald-600 text-white shadow-md'
+                                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                                    }`}
+                            >
+                                Price per Unit
+                            </button>
 
-                        {/* 1mg RESULTS */}
-                        {oneMgProducts.length > 0 && (
-                            <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col">
-                                <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-16 h-10 flex items-center justify-center">
-                                            <img
-                                                src="https://marketing-compaigns.s3.ap-south-1.amazonaws.com/emailer/Landing-Pages-2021/Tata-1mg-Announcement/TATA%201mg%20logo.svg"
-                                                alt="Tata 1mg"
-                                                className="w-full h-full object-contain"
-                                            />
+                            {/* Order Toggle */}
+                            {sortBy !== 'relevance' && (
+                                <button
+                                    onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                                    className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-1"
+                                    title={sortOrder === 'asc' ? "Ascending Order" : "Descending Order"}
+                                >
+                                    <span className="text-sm font-semibold">{sortOrder === 'asc' ? 'Asc' : 'Desc'}</span>
+                                    <svg className={`w-4 h-4 transition-transform ${sortOrder === 'desc' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"></path>
+                                    </svg>
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 animate-fade-in">
+
+                            {/* 1mg RESULTS */}
+                            {oneMgProducts.length > 0 && (
+                                <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col">
+                                    <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-16 h-10 flex items-center justify-center">
+                                                <img
+                                                    src="https://marketing-compaigns.s3.ap-south-1.amazonaws.com/emailer/Landing-Pages-2021/Tata-1mg-Announcement/TATA%201mg%20logo.svg"
+                                                    alt="Tata 1mg"
+                                                    className="w-full h-full object-contain"
+                                                />
+                                            </div>
+                                            <h2 className="text-xl font-bold text-slate-800">Tata 1mg</h2>
                                         </div>
-                                        <h2 className="text-xl font-bold text-slate-800">Tata 1mg</h2>
+                                        <span className="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-semibold rounded-full uppercase tracking-wider">
+                                            {oneMgProducts.length} Results
+                                        </span>
                                     </div>
-                                    <span className="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-semibold rounded-full uppercase tracking-wider">
-                                        {oneMgProducts.length} Results
-                                    </span>
-                                </div>
 
-                                <div className="flex-1">
-                                    <table className="w-full text-left">
-                                        <thead>
-                                            <tr className="border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                                                <th className="px-6 py-4 w-12">Select</th>
-                                                <th className="px-6 py-4">Medicine</th>
-                                                <th className="px-6 py-4">Price</th>
-                                                <th className="px-6 py-4">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-50">
-                                            {oneMgProducts.map((product, idx) => (
-                                                <tr key={idx} className="group hover:bg-slate-50/80 transition-colors">
-                                                    <td className="px-6 py-4">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selectedProducts.some(p => p.name === product.name && p.source === '1mg')}
-                                                            onChange={() => handleSelect(product, '1mg')}
-                                                            className="w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
-                                                        />
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex items-center gap-4">
-                                                            {product.image ? (
-                                                                <div className="w-12 h-12 rounded-lg border border-slate-100 bg-white p-1 shrink-0">
-                                                                    <img src={product.image} alt={product.name} className="w-full h-full object-contain" />
-                                                                </div>
-                                                            ) : (
-                                                                <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
-                                                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                                                </div>
-                                                            )}
-                                                            <div>
-                                                                <div className="font-semibold text-slate-900 line-clamp-2 group-hover:text-emerald-700 transition-colors">
-                                                                    {product.name}
-                                                                </div>
-                                                                <div className="text-sm text-slate-500 mt-0.5">
-                                                                    {product.packSize || product.unitSize}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-lg font-bold text-slate-900">₹{product.price}</span>
-                                                            {product.mrp && (
-                                                                <span className="text-xs text-slate-400 line-through">₹{product.mrp}</span>
-                                                            )}
-                                                            {(product.discount || product.discountPercentage) && (
-                                                                <span className="text-xs font-medium text-green-600">
-                                                                    {product.discount || product.discountPercentage}% OFF
-                                                                </span>
-                                                            )}
-                                                            <span className="text-[10px] text-slate-400 mt-1">
-                                                                {calculatePricePerUnit(product.packSize || product.unitSize, product.price)
-                                                                    ? `₹${calculatePricePerUnit(product.packSize || product.unitSize, product.price)}/unit`
-                                                                    : ''}
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <button
-                                                            onClick={() => window.open(product.url)}
-                                                            className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                                                            title="View on 1mg"
-                                                        >
-                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                                            </svg>
-                                                        </button>
-                                                    </td>
+                                    <div className="flex-1">
+                                        <table className="w-full text-left">
+                                            <thead>
+                                                <tr className="border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                                    <th className="px-6 py-4 w-12">Select</th>
+                                                    <th className="px-6 py-4">Medicine</th>
+                                                    <th className="px-6 py-4">Price</th>
+                                                    <th className="px-6 py-4">Action</th>
                                                 </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* APOLLO RESULTS */}
-                        {apolloProducts.length > 0 && (
-                            <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col">
-                                <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-16 h-10 flex items-center justify-center">
-                                            <img
-                                                src="https://images.apollo247.in/images/ic_logo.png"
-                                                alt="Apollo Pharmacy"
-                                                className="w-full h-full object-contain"
-                                            />
-                                        </div>
-                                        <h2 className="text-xl font-bold text-slate-800">Apollo Pharmacy</h2>
-                                    </div>
-                                    <span className="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-semibold rounded-full uppercase tracking-wider">
-                                        {apolloProducts.length} Results
-                                    </span>
-                                </div>
-
-                                <div className="flex-1">
-                                    <table className="w-full text-left">
-                                        <thead>
-                                            <tr className="border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                                                <th className="px-6 py-4 w-12">Select</th>
-                                                <th className="px-6 py-4">Medicine</th>
-                                                <th className="px-6 py-4">Price</th>
-                                                <th className="px-6 py-4">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-50">
-                                            {apolloProducts.map((product, idx) => (
-                                                <tr key={idx} className="group hover:bg-slate-50/80 transition-colors">
-                                                    <td className="px-6 py-4">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selectedProducts.some(p => p.name === product.name && p.source === 'apollo')}
-                                                            onChange={() => handleSelect(product, 'apollo')}
-                                                            className="w-5 h-5 rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer"
-                                                        />
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex items-center gap-4">
-                                                            {product.image ? (
-                                                                <div className="w-12 h-12 rounded-lg border border-slate-100 bg-white p-1 shrink-0">
-                                                                    <img src={product.image} alt={product.name} className="w-full h-full object-contain" />
-                                                                </div>
-                                                            ) : (
-                                                                <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
-                                                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                                                </div>
-                                                            )}
-                                                            <div>
-                                                                <div className="font-semibold text-slate-900 line-clamp-2 group-hover:text-teal-700 transition-colors">
-                                                                    {product.name}
-                                                                </div>
-                                                                <div className="text-sm text-slate-500 mt-0.5">
-                                                                    {product.unitSize}
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-50">
+                                                {sortProducts(oneMgProducts, sortBy, sortOrder).map((product, idx) => (
+                                                    <tr key={idx} className="group hover:bg-slate-50/80 transition-colors">
+                                                        <td className="px-6 py-4">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedProducts.some(p => p.name === product.name && p.source === '1mg')}
+                                                                onChange={() => handleSelect(product, '1mg')}
+                                                                className="w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                                                            />
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex items-center gap-4">
+                                                                {product.image ? (
+                                                                    <div className="w-12 h-12 rounded-lg border border-slate-100 bg-white p-1 shrink-0">
+                                                                        <img src={product.image} alt={product.name} className="w-full h-full object-contain" />
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
+                                                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                                                    </div>
+                                                                )}
+                                                                <div>
+                                                                    <div className="font-semibold text-slate-900 line-clamp-2 group-hover:text-emerald-700 transition-colors">
+                                                                        {product.name}
+                                                                    </div>
+                                                                    <div className="text-sm text-slate-500 mt-0.5">
+                                                                        {product.packSize || product.unitSize}
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-lg font-bold text-slate-900">₹{product.specialPrice || product.price}</span>
-                                                            {product.specialPrice && product.specialPrice !== product.price && (
-                                                                <span className="text-xs text-slate-400 line-through">₹{product.price}</span>
-                                                            )}
-                                                            {product.discountPercentage && (
-                                                                <span className="text-xs font-medium text-green-600">
-                                                                    {product.discountPercentage}% OFF
-                                                                </span>
-                                                            )}
-                                                            <span className="text-[10px] text-slate-400 mt-1">
-                                                                {product.pricePerUnit}
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <button
-                                                            onClick={() => window.open(product.url)}
-                                                            className="p-2 text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
-                                                            title="View on Apollo"
-                                                        >
-                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                                            </svg>
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* PHARMEASY RESULTS */}
-                        {pharmEasyProducts.length > 0 && (
-                            <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col">
-                                <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-16 h-10 flex items-center justify-center">
-                                            <img
-                                                src="/pharmeasy.svg"
-                                                alt="PharmEasy"
-                                                className="w-full h-full object-contain"
-                                            />
-                                        </div>
-                                        <h2 className="text-xl font-bold text-slate-800">PharmEasy</h2>
-                                    </div>
-                                    <span className="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-semibold rounded-full uppercase tracking-wider">
-                                        {pharmEasyProducts.length} Results
-                                    </span>
-                                </div>
-
-                                <div className="flex-1">
-                                    <table className="w-full text-left">
-                                        <thead>
-                                            <tr className="border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                                                <th className="px-6 py-4 w-12">Select</th>
-                                                <th className="px-6 py-4">Medicine</th>
-                                                <th className="px-6 py-4">Price</th>
-                                                <th className="px-6 py-4">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-50">
-                                            {pharmEasyProducts.map((product, idx) => (
-                                                <tr key={idx} className="group hover:bg-slate-50/80 transition-colors">
-                                                    <td className="px-6 py-4">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selectedProducts.some(p => p.name === product.name && p.source === 'pharmeasy')}
-                                                            onChange={() => handleSelect(product, 'pharmeasy')}
-                                                            className="w-5 h-5 rounded border-slate-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
-                                                        />
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex items-center gap-4">
-                                                            {product.image ? (
-                                                                <div className="w-12 h-12 rounded-lg border border-slate-100 bg-white p-1 shrink-0">
-                                                                    <img src={product.image} alt={product.name} className="w-full h-full object-contain" />
-                                                                </div>
-                                                            ) : (
-                                                                <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
-                                                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                                                </div>
-                                                            )}
-                                                            <div>
-                                                                <div className="font-semibold text-slate-900 line-clamp-2 group-hover:text-amber-700 transition-colors">
-                                                                    {product.name}
-                                                                </div>
-                                                                <div className="text-sm text-slate-500 mt-0.5">
-                                                                    {product.measurement || 'N/A'}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-lg font-bold text-slate-900">₹{product.price}</span>
-                                                            {product.mrp && (
-                                                                <span className="text-xs text-slate-400 line-through">₹{product.mrp}</span>
-                                                            )}
-                                                            {product.discount && (
-                                                                <span className="text-xs font-medium text-green-600">
-                                                                    {product.discount}
-                                                                </span>
-                                                            )}
-                                                            <span className="text-[10px] text-slate-400 mt-1">
-                                                                {calculatePricePerUnit(product.measurement, product.price)
-                                                                    ? `₹${calculatePricePerUnit(product.measurement, product.price)}/unit`
-                                                                    : ''}
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <button
-                                                            onClick={() => window.open(product.url)}
-                                                            className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-                                                            title="View on PharmEasy"
-                                                        >
-                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                                            </svg>
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* TRUEMEDS RESULTS */}
-                        {truemedProducts.length > 0 && (
-                            <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col">
-                                <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-16 h-10 flex items-center justify-center">
-                                            <img
-                                                src="/truemed.svg"
-                                                alt="TrueMeds"
-                                                className="w-full h-full object-contain"
-                                            />
-                                        </div>
-                                        <h2 className="text-xl font-bold text-slate-800">TrueMeds</h2>
-                                    </div>
-                                    <span className="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-semibold rounded-full uppercase tracking-wider">
-                                        {truemedProducts.length} Results
-                                    </span>
-                                </div>
-
-                                <div className="flex-1">
-                                    <table className="w-full text-left">
-                                        <thead>
-                                            <tr className="border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                                                <th className="px-6 py-4 w-12">Select</th>
-                                                <th className="px-6 py-4">Medicine</th>
-                                                <th className="px-6 py-4">Price</th>
-                                                <th className="px-6 py-4">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-50">
-                                            {truemedProducts.map((product, idx) => (
-                                                <tr key={idx} className="group hover:bg-slate-50/80 transition-colors">
-                                                    <td className="px-6 py-4">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selectedProducts.some(p => p.name === product.name && p.source === 'truemed')}
-                                                            onChange={() => handleSelect(product, 'truemed')}
-                                                            className="w-5 h-5 rounded border-slate-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
-                                                        />
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex items-center gap-4">
-                                                            {product.image ? (
-                                                                <div className="w-12 h-12 rounded-lg border border-slate-100 bg-white p-1 shrink-0">
-                                                                    <img src={product.image} alt={product.name} className="w-full h-full object-contain" />
-                                                                </div>
-                                                            ) : (
-                                                                <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
-                                                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                                                </div>
-                                                            )}
-                                                            <div>
-                                                                <div className="font-semibold text-slate-900 line-clamp-2 group-hover:text-purple-700 transition-colors">
-                                                                    {product.name}
-                                                                </div>
-                                                                <div className="text-sm text-slate-500 mt-0.5">
-                                                                    {product.measurement || 'N/A'}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-lg font-bold text-slate-900">₹{product.price}</span>
-                                                            {product.mrp && (
-                                                                <span className="text-xs text-slate-400 line-through">₹{product.mrp}</span>
-                                                            )}
-                                                            {product.discount && (
-                                                                <span className="text-xs font-medium text-green-600">
-                                                                    {product.discount} OFF
-                                                                </span>
-                                                            )}
-                                                            {product.pricePerUnitLabel && (
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-lg font-bold text-slate-900">₹{product.price}</span>
+                                                                {product.mrp && (
+                                                                    <span className="text-xs text-slate-400 line-through">₹{product.mrp}</span>
+                                                                )}
+                                                                {(product.discount || product.discountPercentage) && (
+                                                                    <span className="text-xs font-medium text-green-600">
+                                                                        {product.discount || product.discountPercentage}% OFF
+                                                                    </span>
+                                                                )}
                                                                 <span className="text-[10px] text-slate-400 mt-1">
-                                                                    {product.pricePerUnitLabel}
+                                                                    {calculatePricePerUnit(product.packSize || product.unitSize, product.price)
+                                                                        ? `₹${calculatePricePerUnit(product.packSize || product.unitSize, product.price)}/unit`
+                                                                        : ''}
                                                                 </span>
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <button
-                                                            onClick={() => product.url && window.open(product.url)}
-                                                            className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                                                            title="View on TrueMeds"
-                                                            disabled={!product.url}
-                                                        >
-                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                                            </svg>
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* NETMEDS RESULTS */}
-                        {netmedProducts.length > 0 && (
-                            <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col">
-                                <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-16 h-10 flex items-center justify-center">
-                                            <img
-                                                src="/netmeds.svg"
-                                                alt="NetMeds"
-                                                className="w-full h-full object-contain"
-                                            />
-                                        </div>
-                                        <h2 className="text-xl font-bold text-slate-800">NetMeds</h2>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <button
+                                                                onClick={() => window.open(product.url)}
+                                                                className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                                                title="View on 1mg"
+                                                            >
+                                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                                                </svg>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
                                     </div>
-                                    <span className="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-semibold rounded-full uppercase tracking-wider">
-                                        {netmedProducts.length} Results
-                                    </span>
                                 </div>
+                            )}
 
-                                <div className="flex-1">
-                                    <table className="w-full text-left">
-                                        <thead>
-                                            <tr className="border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                                                <th className="px-6 py-4 w-12">Select</th>
-                                                <th className="px-6 py-4">Medicine</th>
-                                                <th className="px-6 py-4">Price</th>
-                                                <th className="px-6 py-4">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-50">
-                                            {netmedProducts.map((product, idx) => (
-                                                <tr key={idx} className="group hover:bg-slate-50/80 transition-colors">
-                                                    <td className="px-6 py-4">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selectedProducts.some(p => p.name === product.name && p.source === 'netmed')}
-                                                            onChange={() => handleSelect(product, 'netmed')}
-                                                            className="w-5 h-5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 cursor-pointer"
-                                                        />
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex items-center gap-4">
-                                                            {product.image ? (
-                                                                <div className="w-12 h-12 rounded-lg border border-slate-100 bg-white p-1 shrink-0">
-                                                                    <img src={product.image} alt={product.name} className="w-full h-full object-contain" />
-                                                                </div>
-                                                            ) : (
-                                                                <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
-                                                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                                                </div>
-                                                            )}
-                                                            <div>
-                                                                <div className="font-semibold text-slate-900 line-clamp-2 group-hover:text-cyan-700 transition-colors">
-                                                                    {product.name}
-                                                                </div>
-                                                                <div className="text-sm text-slate-500 mt-0.5">
-                                                                    {product.package || 'N/A'}
+                            {/* APOLLO RESULTS */}
+                            {apolloProducts.length > 0 && (
+                                <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col">
+                                    <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-16 h-10 flex items-center justify-center">
+                                                <img
+                                                    src="https://images.apollo247.in/images/ic_logo.png"
+                                                    alt="Apollo Pharmacy"
+                                                    className="w-full h-full object-contain"
+                                                />
+                                            </div>
+                                            <h2 className="text-xl font-bold text-slate-800">Apollo Pharmacy</h2>
+                                        </div>
+                                        <span className="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-semibold rounded-full uppercase tracking-wider">
+                                            {apolloProducts.length} Results
+                                        </span>
+                                    </div>
+
+                                    <div className="flex-1">
+                                        <table className="w-full text-left">
+                                            <thead>
+                                                <tr className="border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                                    <th className="px-6 py-4 w-12">Select</th>
+                                                    <th className="px-6 py-4">Medicine</th>
+                                                    <th className="px-6 py-4">Price</th>
+                                                    <th className="px-6 py-4">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-50">
+                                                {sortProducts(apolloProducts, sortBy, sortOrder).map((product, idx) => (
+                                                    <tr key={idx} className="group hover:bg-slate-50/80 transition-colors">
+                                                        <td className="px-6 py-4">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedProducts.some(p => p.name === product.name && p.source === 'apollo')}
+                                                                onChange={() => handleSelect(product, 'apollo')}
+                                                                className="w-5 h-5 rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer"
+                                                            />
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex items-center gap-4">
+                                                                {product.image ? (
+                                                                    <div className="w-12 h-12 rounded-lg border border-slate-100 bg-white p-1 shrink-0">
+                                                                        <img src={product.image} alt={product.name} className="w-full h-full object-contain" />
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
+                                                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                                                    </div>
+                                                                )}
+                                                                <div>
+                                                                    <div className="font-semibold text-slate-900 line-clamp-2 group-hover:text-teal-700 transition-colors">
+                                                                        {product.name}
+                                                                    </div>
+                                                                    <div className="text-sm text-slate-500 mt-0.5">
+                                                                        {product.unitSize}
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-lg font-bold text-slate-900">₹{product.price}</span>
-                                                            {product.mrp && (
-                                                                <span className="text-xs text-slate-400 line-through">₹{product.mrp}</span>
-                                                            )}
-                                                            {product.discount && (
-                                                                <span className="text-xs font-medium text-green-600">
-                                                                    {product.discount}% OFF
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-lg font-bold text-slate-900">₹{product.specialPrice || product.price}</span>
+                                                                {product.specialPrice && product.specialPrice !== product.price && (
+                                                                    <span className="text-xs text-slate-400 line-through">₹{product.price}</span>
+                                                                )}
+                                                                {product.discountPercentage && (
+                                                                    <span className="text-xs font-medium text-green-600">
+                                                                        {product.discountPercentage}% OFF
+                                                                    </span>
+                                                                )}
+                                                                <span className="text-[10px] text-slate-400 mt-1">
+                                                                    {product.pricePerUnit}
                                                                 </span>
-                                                            )}
-                                                            <span className="text-[10px] text-slate-400 mt-1">
-                                                                {calculatePricePerUnit(product.package, product.price)
-                                                                    ? `₹${calculatePricePerUnit(product.package, product.price)}/unit`
-                                                                    : ''}
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <button
-                                                            onClick={() => product.url && window.open(product.url)}
-                                                            className="p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg transition-colors"
-                                                            title="View on NetMeds"
-                                                            disabled={!product.url}
-                                                        >
-                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                                            </svg>
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <button
+                                                                onClick={() => window.open(product.url)}
+                                                                className="p-2 text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
+                                                                title="View on Apollo"
+                                                            >
+                                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                                                </svg>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                    </div>
+                            )}
+
+                            {/* PHARMEASY RESULTS */}
+                            {pharmEasyProducts.length > 0 && (
+                                <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col">
+                                    <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-16 h-10 flex items-center justify-center">
+                                                <img
+                                                    src="/pharmeasy.svg"
+                                                    alt="PharmEasy"
+                                                    className="w-full h-full object-contain"
+                                                />
+                                            </div>
+                                            <h2 className="text-xl font-bold text-slate-800">PharmEasy</h2>
+                                        </div>
+                                        <span className="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-semibold rounded-full uppercase tracking-wider">
+                                            {pharmEasyProducts.length} Results
+                                        </span>
+                                    </div>
+
+                                    <div className="flex-1">
+                                        <table className="w-full text-left">
+                                            <thead>
+                                                <tr className="border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                                    <th className="px-6 py-4 w-12">Select</th>
+                                                    <th className="px-6 py-4">Medicine</th>
+                                                    <th className="px-6 py-4">Price</th>
+                                                    <th className="px-6 py-4">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-50">
+                                                {sortProducts(pharmEasyProducts, sortBy, sortOrder).map((product, idx) => (
+                                                    <tr key={idx} className="group hover:bg-slate-50/80 transition-colors">
+                                                        <td className="px-6 py-4">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedProducts.some(p => p.name === product.name && p.source === 'pharmeasy')}
+                                                                onChange={() => handleSelect(product, 'pharmeasy')}
+                                                                className="w-5 h-5 rounded border-slate-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
+                                                            />
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex items-center gap-4">
+                                                                {product.image ? (
+                                                                    <div className="w-12 h-12 rounded-lg border border-slate-100 bg-white p-1 shrink-0">
+                                                                        <img src={product.image} alt={product.name} className="w-full h-full object-contain" />
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
+                                                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                                                    </div>
+                                                                )}
+                                                                <div>
+                                                                    <div className="font-semibold text-slate-900 line-clamp-2 group-hover:text-amber-700 transition-colors">
+                                                                        {product.name}
+                                                                    </div>
+                                                                    <div className="text-sm text-slate-500 mt-0.5">
+                                                                        {product.measurement || 'N/A'}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-lg font-bold text-slate-900">₹{product.price}</span>
+                                                                {product.mrp && (
+                                                                    <span className="text-xs text-slate-400 line-through">₹{product.mrp}</span>
+                                                                )}
+                                                                {product.discount && (
+                                                                    <span className="text-xs font-medium text-green-600">
+                                                                        {product.discount}
+                                                                    </span>
+                                                                )}
+                                                                <span className="text-[10px] text-slate-400 mt-1">
+                                                                    {calculatePricePerUnit(product.measurement, product.price)
+                                                                        ? `₹${calculatePricePerUnit(product.measurement, product.price)}/unit`
+                                                                        : ''}
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <button
+                                                                onClick={() => window.open(product.url)}
+                                                                className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                                                                title="View on PharmEasy"
+                                                            >
+                                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                                                </svg>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* TRUEMEDS RESULTS */}
+                            {truemedProducts.length > 0 && (
+                                <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col">
+                                    <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-16 h-10 flex items-center justify-center">
+                                                <img
+                                                    src="/truemed.svg"
+                                                    alt="TrueMeds"
+                                                    className="w-full h-full object-contain"
+                                                />
+                                            </div>
+                                            <h2 className="text-xl font-bold text-slate-800">TrueMeds</h2>
+                                        </div>
+                                        <span className="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-semibold rounded-full uppercase tracking-wider">
+                                            {truemedProducts.length} Results
+                                        </span>
+                                    </div>
+
+                                    <div className="flex-1">
+                                        <table className="w-full text-left">
+                                            <thead>
+                                                <tr className="border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                                    <th className="px-6 py-4 w-12">Select</th>
+                                                    <th className="px-6 py-4">Medicine</th>
+                                                    <th className="px-6 py-4">Price</th>
+                                                    <th className="px-6 py-4">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-50">
+                                                {sortProducts(truemedProducts, sortBy, sortOrder).map((product, idx) => (
+                                                    <tr key={idx} className="group hover:bg-slate-50/80 transition-colors">
+                                                        <td className="px-6 py-4">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedProducts.some(p => p.name === product.name && p.source === 'truemed')}
+                                                                onChange={() => handleSelect(product, 'truemed')}
+                                                                className="w-5 h-5 rounded border-slate-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
+                                                            />
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex items-center gap-4">
+                                                                {product.image ? (
+                                                                    <div className="w-12 h-12 rounded-lg border border-slate-100 bg-white p-1 shrink-0">
+                                                                        <img src={product.image} alt={product.name} className="w-full h-full object-contain" />
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
+                                                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                                                    </div>
+                                                                )}
+                                                                <div>
+                                                                    <div className="font-semibold text-slate-900 line-clamp-2 group-hover:text-purple-700 transition-colors">
+                                                                        {product.name}
+                                                                    </div>
+                                                                    <div className="text-sm text-slate-500 mt-0.5">
+                                                                        {product.measurement || 'N/A'}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-lg font-bold text-slate-900">₹{product.price}</span>
+                                                                {product.mrp && (
+                                                                    <span className="text-xs text-slate-400 line-through">₹{product.mrp}</span>
+                                                                )}
+                                                                {product.discount && (
+                                                                    <span className="text-xs font-medium text-green-600">
+                                                                        {product.discount} OFF
+                                                                    </span>
+                                                                )}
+                                                                <span className="text-[10px] text-slate-400 mt-1">
+                                                                    {calculatePricePerUnit(product.measurement, product.price)
+                                                                        ? `₹${calculatePricePerUnit(product.measurement, product.price)}/unit`
+                                                                        : ''}
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <button
+                                                                onClick={() => product.url && window.open(product.url)}
+                                                                className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                                                                title="View on TrueMeds"
+                                                                disabled={!product.url}
+                                                            >
+                                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                                                </svg>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* NETMEDS RESULTS */}
+                            {netmedProducts.length > 0 && (
+                                <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col">
+                                    <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-16 h-10 flex items-center justify-center">
+                                                <img
+                                                    src="/netmeds.svg"
+                                                    alt="NetMeds"
+                                                    className="w-full h-full object-contain"
+                                                />
+                                            </div>
+                                            <h2 className="text-xl font-bold text-slate-800">NetMeds</h2>
+                                        </div>
+                                        <span className="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-semibold rounded-full uppercase tracking-wider">
+                                            {netmedProducts.length} Results
+                                        </span>
+                                    </div>
+
+                                    <div className="flex-1">
+                                        <table className="w-full text-left">
+                                            <thead>
+                                                <tr className="border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                                    <th className="px-6 py-4 w-12">Select</th>
+                                                    <th className="px-6 py-4">Medicine</th>
+                                                    <th className="px-6 py-4">Price</th>
+                                                    <th className="px-6 py-4">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-50">
+                                                {sortProducts(netmedProducts, sortBy, sortOrder).map((product, idx) => (
+                                                    <tr key={idx} className="group hover:bg-slate-50/80 transition-colors">
+                                                        <td className="px-6 py-4">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedProducts.some(p => p.name === product.name && p.source === 'netmed')}
+                                                                onChange={() => handleSelect(product, 'netmed')}
+                                                                className="w-5 h-5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500 cursor-pointer"
+                                                            />
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex items-center gap-4">
+                                                                {product.image ? (
+                                                                    <div className="w-12 h-12 rounded-lg border border-slate-100 bg-white p-1 shrink-0">
+                                                                        <img src={product.image} alt={product.name} className="w-full h-full object-contain" />
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
+                                                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                                                    </div>
+                                                                )}
+                                                                <div>
+                                                                    <div className="font-semibold text-slate-900 line-clamp-2 group-hover:text-cyan-700 transition-colors">
+                                                                        {product.name}
+                                                                    </div>
+                                                                    <div className="text-sm text-slate-500 mt-0.5">
+                                                                        {product.package || 'N/A'}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-lg font-bold text-slate-900">₹{product.price}</span>
+                                                                {product.mrp && (
+                                                                    <span className="text-xs text-slate-400 line-through">₹{product.mrp}</span>
+                                                                )}
+                                                                {product.discount && (
+                                                                    <span className="text-xs font-medium text-green-600">
+                                                                        {product.discount}% OFF
+                                                                    </span>
+                                                                )}
+                                                                <span className="text-[10px] text-slate-400 mt-1">
+                                                                    {calculatePricePerUnit(product.package, product.price)
+                                                                        ? `₹${calculatePricePerUnit(product.package, product.price)}/unit`
+                                                                        : ''}
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <button
+                                                                onClick={() => product.url && window.open(product.url)}
+                                                                className="p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg transition-colors"
+                                                                title="View on NetMeds"
+                                                                disabled={!product.url}
+                                                            >
+                                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                                                </svg>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </>
                 )}
             </div>
         </div >
