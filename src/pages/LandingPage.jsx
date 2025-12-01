@@ -88,7 +88,7 @@ function LandingPage() {
                         </div>
 
                         <div className="flex flex-col items-center gap-3 group animate-float">
-                            <div className="w-20 h-20 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center p-3 group-hover:border-emerald-200 group-hover:shadow-md transition-all duration-300">
+                            <div className="w-20 h-20 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center p-1 group-hover:border-emerald-200 group-hover:shadow-md transition-all duration-300">
                                 <img src="/pharmeasy.svg" alt="PharmEasy" className="w-full h-full object-contain" />
                             </div>
                             <span className="text-sm font-medium text-slate-600 group-hover:text-emerald-600 transition-colors">PharmEasy</span>
