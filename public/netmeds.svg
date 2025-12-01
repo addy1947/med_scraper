@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 50">
+  <text x="10" y="35" font-family="Arial, sans-serif" font-weight="bold" font-size="28" fill="#32aeb1">Net</text>
+  <text x="60" y="35" font-family="Arial, sans-serif" font-weight="bold" font-size="28" fill="#32aeb1">Meds</text>
+  <path d="M135 15 L145 15 L145 25 L155 25 L155 35 L145 35 L145 45 L135 45 L135 35 L125 35 L125 25 L135 25 Z" fill="#32aeb1"/>
+</svg>

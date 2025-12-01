@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" fill="none">
+  <!-- Icon -->
+  <circle cx="25" cy="25" r="18" fill="#10b981" fill-opacity="0.1"/>
+  <path d="M25 12V38M12 25H38" stroke="#10b981" stroke-width="6" stroke-linecap="round"/>
+  
+  <!-- Text -->
+  <text x="55" y="32" font-family="Arial, sans-serif" font-weight="bold" font-size="24" fill="#334155">Pharm</text>
+  <text x="130" y="32" font-family="Arial, sans-serif" font-weight="bold" font-size="24" fill="#10b981">Easy</text>
+</svg>
