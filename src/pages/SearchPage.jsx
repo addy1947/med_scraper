@@ -8,7 +8,7 @@ function SearchPage() {
     const [pharmEasyProducts, setPharmEasyProducts] = useState([])
     const [truemedProducts, setTruemedProducts] = useState([])
     const [netmedProducts, setNetmedProducts] = useState([])
-    const [maxProduct, setMaxProduct] = useState(3)
+    const [maxProduct, setMaxProduct] = useState(5)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
 
@@ -328,7 +328,7 @@ function SearchPage() {
                                                 <div className="text-slate-300">No Image</div>
                                             )}
                                         </div>
-                                        <h3 className="text-lg font-bold text-slate-900 mb-2 line-clamp-2 min-h-14">{product.name}</h3>
+                                        <h3 className="text-lg font-bold text-slate-900 mb-2 min-h-14 break-words">{product.name}</h3>
                                         <div className="space-y-3 flex-1">
                                             <div className="flex justify-between items-start py-2 border-b border-slate-50">
                                                 <span className="text-slate-500 text-sm mt-1">Price</span>
@@ -438,7 +438,7 @@ function SearchPage() {
                                                     <div className="text-slate-300">No Image</div>
                                                 )}
                                             </div>
-                                            <h3 className="text-lg font-bold text-slate-900 mb-2 line-clamp-2 min-h-14">{product.name}</h3>
+                                            <h3 className="text-lg font-bold text-slate-900 mb-2 min-h-14 break-words">{product.name}</h3>
                                             <div className="space-y-3 flex-1">
                                                 <div className="flex justify-between items-center py-2 border-b border-slate-50">
                                                     <span className="text-slate-500 text-sm">Price</span>
@@ -468,25 +468,18 @@ function SearchPage() {
 
             <div className="relative z-10 max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
-                {/* HEADER */}
-                <div className="flex justify-between items-start mb-12">
-                    <div className="flex-1 text-center">
-                        <div className="inline-flex items-center gap-2 p-3 mb-6 bg-white rounded-2xl shadow-sm border border-slate-100">
-                            <img src="/logo.svg" alt="MedScrapper Logo" className="w-8 h-8 object-contain" />
-                            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-600">
-                                MedScrapper
-                            </span>
-                        </div>
-                        <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight mb-4">
-                            Find the Best Medicine Prices
-                        </h1>
-                        <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-                            Compare prices across top pharmacies like 1mg and Apollo to ensure you get the best deal for your health.
-                        </p>
+                {/* TOP BAR: Logo & Actions */}
+                <div className="flex flex-col lg:flex-row items-center justify-between gap-6 mb-8 lg:mb-16">
+                    {/* Logo */}
+                    <div className="inline-flex items-center gap-2 p-3 bg-white rounded-2xl shadow-sm border border-slate-100">
+                        <img src="/logo.svg" alt="MedScrapper Logo" className="w-8 h-8 object-contain" />
+                        <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-600">
+                            MedScrapper
+                        </span>
                     </div>
 
-                    {/* Top Right Actions */}
-                    <div className="absolute top-8 right-8 flex items-center gap-4">
+                    {/* Actions */}
+                    <div className="flex flex-wrap items-center justify-center lg:justify-end gap-4 w-full lg:w-auto">
                         {/* Pincode Input */}
                         <div className="relative group flex items-center gap-2">
                             <div className="relative">
@@ -531,13 +524,23 @@ function SearchPage() {
                     </div>
                 </div>
 
+                {/* HERO SECTION: Title & Description */}
+                <div className="text-center max-w-4xl mx-auto mb-10 lg:mb-14">
+                    <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight mb-4 lg:mb-6">
+                        Find the Best Medicine Prices
+                    </h1>
+                    <p className="text-base md:text-lg text-slate-600 max-w-2xl mx-auto mb-6 lg:mb-8">
+                        Compare prices across top pharmacies like 1mg and Apollo to ensure you get the best deal for your health.
+                    </p>
+                </div>
+
                 {/* SEARCH SECTION */}
                 <div className="max-w-3xl mx-auto mb-8">
                     <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-2">
-                        <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-2">
-                            <div className="flex-1 relative group">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <svg className="h-6 w-6 text-slate-400 group-focus-within:text-emerald-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4 md:gap-2">
+                            <div className="flex-1 relative group w-full">
+                                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                    <svg className="h-5 w-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                                     </svg>
                                 </div>
@@ -545,59 +548,61 @@ function SearchPage() {
                                     type="text"
                                     value={message}
                                     onChange={(e) => setMessage(e.target.value)}
-                                    placeholder="Search for medicines (e.g., Paracetamol)"
-                                    className="w-full pl-12 pr-4 py-4 bg-transparent border-none rounded-2xl text-lg text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-emerald-100 focus:bg-slate-50 transition-all outline-none"
+                                    placeholder="Search for medicines..."
+                                    className="w-full pl-12 pr-6 py-4 bg-slate-50/50 md:bg-transparent border border-slate-100 md:border-none rounded-3xl text-base md:text-lg text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-emerald-100 focus:bg-white md:focus:bg-slate-50 transition-all outline-none shadow-sm md:shadow-none"
                                 />
                             </div>
 
-                            <div className="h-px md:h-auto md:w-px bg-slate-100 mx-2"></div>
+                            <div className="hidden md:block w-px bg-slate-100 mx-2"></div>
 
-                            <div className="flex items-center gap-2 p-1">
-                                <div className="relative">
-                                    <select
-                                        value={maxProduct}
-                                        onChange={(e) => setMaxProduct(Number(e.target.value))}
-                                        className="appearance-none pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all cursor-pointer hover:bg-slate-100"
-                                    >
-                                        {[...Array(10)].map((_, i) => (
-                                            <option key={i + 1} value={i + 1}>{i + 1} Results</option>
-                                        ))}
-                                    </select>
-                                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                        <svg className="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                                        </svg>
+                            <div className="flex items-center gap-3 w-full md:w-auto">
+                                {/* Left Group: Results + Camera (50% on mobile) */}
+                                <div className="flex items-center gap-2 w-1/2 md:w-auto">
+                                    <div className="relative flex-1 md:min-w-[90px]">
+                                        <select
+                                            value={maxProduct}
+                                            onChange={(e) => setMaxProduct(Number(e.target.value))}
+                                            className="w-full h-12 appearance-none pl-5 pr-8 bg-slate-50 border border-slate-100 rounded-2xl text-slate-700 font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all cursor-pointer hover:bg-slate-100 text-sm shadow-sm"
+                                        >
+                                            {[...Array(10)].map((_, i) => (
+                                                <option key={i + 1} value={i + 1}>
+                                                    {i + 1} {i + 1 === 1 ? 'Result' : 'Results'}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
+                                            <svg className="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                                            </svg>
+                                        </div>
                                     </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowUploadModal(true)}
+                                        className="h-12 w-12 bg-slate-50 border border-slate-100 hover:bg-white text-slate-600 rounded-2xl shadow-sm hover:shadow-md transition-all flex items-center justify-center flex-none"
+                                        title="Upload Prescription"
+                                    >
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    </button>
                                 </div>
 
+                                {/* Right Group: Search Button (50% on mobile) */}
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white text-lg font-semibold rounded-xl shadow-lg shadow-emerald-600/20 hover:shadow-emerald-600/30 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2 min-w-[140px] justify-center"
+                                    className="h-12 px-4 bg-emerald-500 hover:bg-emerald-600 text-white text-base font-semibold rounded-2xl shadow-lg shadow-emerald-500/30 hover:shadow-emerald-600/40 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 w-1/2 md:w-auto md:flex-none md:min-w-[140px]"
                                 >
                                     {loading ? (
-                                        <>
-                                            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                            </svg>
-                                            <span>Searching</span>
-                                        </>
+                                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
                                     ) : (
                                         'Search'
                                     )}
                                 </button>
                             </div>
-
-                            <button
-                                type="button"
-                                onClick={() => setShowUploadModal(true)}
-                                className="px-4 py-3.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2"
-                                title="Upload Prescription"
-                            >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                            </button>
-
                         </form>
                     </div>
 
@@ -673,8 +678,8 @@ function SearchPage() {
                                     setSortOrder('asc');
                                 }}
                                 className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${sortBy === 'relevance'
-                                        ? 'bg-slate-900 text-white shadow-md'
-                                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                                    ? 'bg-slate-900 text-white shadow-md'
+                                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                                     }`}
                             >
                                 Relevance
@@ -722,11 +727,11 @@ function SearchPage() {
                             )}
                         </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 animate-fade-in">
+                        <div className="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-8 animate-fade-in scrollbar-hide">
 
                             {/* 1mg RESULTS */}
                             {oneMgProducts.length > 0 && (
-                                <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col">
+                                <div className="min-w-[85vw] md:min-w-[450px] lg:min-w-[500px] snap-center flex-shrink-0 bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col">
                                     <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                             <div className="w-16 h-10 flex items-center justify-center">
@@ -775,8 +780,8 @@ function SearchPage() {
                                                                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                                                     </div>
                                                                 )}
-                                                                <div>
-                                                                    <div className="font-semibold text-slate-900 line-clamp-2 group-hover:text-emerald-700 transition-colors">
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="font-semibold text-slate-900 group-hover:text-emerald-700 transition-colors break-words">
                                                                         {product.name}
                                                                     </div>
                                                                     <div className="text-sm text-slate-500 mt-0.5">
@@ -824,7 +829,7 @@ function SearchPage() {
 
                             {/* APOLLO RESULTS */}
                             {apolloProducts.length > 0 && (
-                                <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col">
+                                <div className="min-w-[85vw] md:min-w-[450px] lg:min-w-[500px] snap-center flex-shrink-0 bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col">
                                     <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                             <div className="w-16 h-10 flex items-center justify-center">
@@ -873,8 +878,8 @@ function SearchPage() {
                                                                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                                                     </div>
                                                                 )}
-                                                                <div>
-                                                                    <div className="font-semibold text-slate-900 line-clamp-2 group-hover:text-teal-700 transition-colors">
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="font-semibold text-slate-900 group-hover:text-teal-700 transition-colors break-words">
                                                                         {product.name}
                                                                     </div>
                                                                     <div className="text-sm text-slate-500 mt-0.5">
@@ -920,7 +925,7 @@ function SearchPage() {
 
                             {/* PHARMEASY RESULTS */}
                             {pharmEasyProducts.length > 0 && (
-                                <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col">
+                                <div className="min-w-[85vw] md:min-w-[450px] lg:min-w-[500px] snap-center flex-shrink-0 bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col">
                                     <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                             <div className="w-16 h-10 flex items-center justify-center">
@@ -969,8 +974,8 @@ function SearchPage() {
                                                                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                                                     </div>
                                                                 )}
-                                                                <div>
-                                                                    <div className="font-semibold text-slate-900 line-clamp-2 group-hover:text-amber-700 transition-colors">
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="font-semibold text-slate-900 group-hover:text-amber-700 transition-colors break-words">
                                                                         {product.name}
                                                                     </div>
                                                                     <div className="text-sm text-slate-500 mt-0.5">
@@ -1018,7 +1023,7 @@ function SearchPage() {
 
                             {/* TRUEMEDS RESULTS */}
                             {truemedProducts.length > 0 && (
-                                <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col">
+                                <div className="min-w-[85vw] md:min-w-[450px] lg:min-w-[500px] snap-center flex-shrink-0 bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col">
                                     <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                             <div className="w-16 h-10 flex items-center justify-center">
@@ -1067,8 +1072,8 @@ function SearchPage() {
                                                                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                                                     </div>
                                                                 )}
-                                                                <div>
-                                                                    <div className="font-semibold text-slate-900 line-clamp-2 group-hover:text-purple-700 transition-colors">
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="font-semibold text-slate-900 group-hover:text-purple-700 transition-colors break-words">
                                                                         {product.name}
                                                                     </div>
                                                                     <div className="text-sm text-slate-500 mt-0.5">
@@ -1117,7 +1122,7 @@ function SearchPage() {
 
                             {/* NETMEDS RESULTS */}
                             {netmedProducts.length > 0 && (
-                                <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col">
+                                <div className="min-w-[85vw] md:min-w-[450px] lg:min-w-[500px] snap-center flex-shrink-0 bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col">
                                     <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                             <div className="w-16 h-10 flex items-center justify-center">
@@ -1166,8 +1171,8 @@ function SearchPage() {
                                                                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                                                     </div>
                                                                 )}
-                                                                <div>
-                                                                    <div className="font-semibold text-slate-900 line-clamp-2 group-hover:text-cyan-700 transition-colors">
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="font-semibold text-slate-900 group-hover:text-cyan-700 transition-colors break-words">
                                                                         {product.name}
                                                                     </div>
                                                                     <div className="text-sm text-slate-500 mt-0.5">
